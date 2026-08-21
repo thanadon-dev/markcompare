@@ -1,7 +1,22 @@
 # markcompare
 
 Side-by-side folder and file diff that opens in your browser. One Python file,
-stdlib only — no install, no server, no dependencies.
+stdlib only — nothing to install.
+
+## As an app
+
+```
+python markcompare.py
+```
+
+Double-click `markcompare.bat` on Windows for the same thing. It opens a small
+local app: pick two folders, press Compare, keep comparing pairs without going
+back to the terminal. Browse opens the native folder dialog, or paste a path
+straight in. Recent pairs are remembered.
+
+The app listens on 127.0.0.1 only and stops with Ctrl+C.
+
+## As a command
 
 ```
 python markcompare.py old_folder new_folder
@@ -39,6 +54,7 @@ dragged wider.
 -o, --out FILE   write the HTML here instead of a temp file
 --no-open        do not launch the browser
 --all-dirs       include .git, node_modules and friends
+--port N         port for the app (default: any free port)
 ```
 
 ## Notes

@@ -158,12 +158,12 @@ def compare(path_a, path_b, skip=True):
     return files, data
 
 
-TEMPLATE = r"""<!doctype html><html lang=en><head><meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<title>markcompare</title>
-<link rel=icon href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1.5' y='1.5' width='8' height='8' fill='none' stroke='%23888' stroke-width='1.6'/%3E%3Crect x='6.5' y='6.5' width='8' height='8' fill='none' stroke='%23888' stroke-width='1.6'/%3E%3C/svg%3E">
-<style>
-:root{
+ICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'"
+        "%3E%3Crect x='1.5' y='1.5' width='8' height='8' fill='none' stroke='%23888'"
+        " stroke-width='1.6'/%3E%3Crect x='6.5' y='6.5' width='8' height='8' fill='none'"
+        " stroke='%23888' stroke-width='1.6'/%3E%3C/svg%3E")
+
+TOKENS = r""":root{
  --bg:#ffffff; --fg:#16181d; --dim:#6e7681; --faint:#9aa1ab;
  --line:#e4e7ec; --panel:#f7f8fa; --sel:#e8effb; --empty:#fbfbfc;
  --acc:#2f6feb;
@@ -180,7 +180,14 @@ TEMPLATE = r"""<!doctype html><html lang=en><head><meta charset=utf-8>
  --delbg:#2a1517; --insbg:#0f2418; --chgbg:#2a2210;
  --delin:#61242a; --insin:#1e4d30; --chgin:#5d4614;
  --shadow:0 1px 0 rgba(0,0,0,.4);
-}}
+}}"""
+
+TEMPLATE = r"""<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>markcompare</title>
+<link rel=icon href="__ICON__">
+<style>
+__TOKENS__
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);
@@ -262,6 +269,7 @@ tr.rdel i{background:var(--delin)}
 tr.rins i{background:var(--insin)}
 tr.rch i{background:var(--chgin)}
 i{font-style:normal;border-radius:3px;padding:1px 0}
+[hidden]{display:none!important}
 tr.h{display:none}
 tr.fr td{background:var(--panel);color:var(--faint);cursor:pointer;text-align:center;font-size:11px;
  padding:4px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);user-select:none;
@@ -428,14 +436,240 @@ document.onkeydown=function(e){
  else if(e.key==='n'){e.preventDefault();hunk(1)}
  else if(e.key==='p'){e.preventDefault();hunk(-1)}
 };
+if(window.parent!==window){
+ document.querySelector('header svg').style.display='none';
+ document.querySelector('.brand').style.display='none';
+}
 summary();paint();
 if(shown.length) show(0); else mark();
 </script></body></html>"""
 
 
+SHELL = r"""<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>markcompare</title>
+<link rel=icon href="__ICON__">
+<style>
+__TOKENS__
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);display:flex;flex-direction:column;overflow:hidden;
+ font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,sans-serif;
+ -webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px;border-radius:5px}
+form{display:flex;align-items:center;gap:8px;padding:9px 14px;flex:none;background:var(--panel);
+ border-bottom:1px solid var(--line);box-shadow:var(--shadow);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font-weight:640;letter-spacing:-.015em;
+ font-size:13.5px;flex:none;margin-right:4px}
+.brand svg{opacity:.8}
+.pick{display:flex;flex:1;min-width:230px;border:1px solid var(--line);border-radius:8px;
+ background:var(--bg);overflow:hidden}
+.pick:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 16%,transparent)}
+.pick input{flex:1;min-width:0;border:0;background:none;color:var(--fg);font:inherit;font-size:12px;
+ padding:7px 10px;outline:none}
+.pick input::placeholder{color:var(--faint)}
+.pick button{border:0;border-left:1px solid var(--line);background:var(--panel);color:var(--dim);
+ font:inherit;font-size:11.5px;padding:0 11px;cursor:pointer;white-space:nowrap}
+.pick button:hover{color:var(--fg)}
+.arrow{color:var(--faint);flex:none}
+#go{border:0;background:var(--acc);color:#fff;font:inherit;font-weight:560;font-size:12.5px;
+ padding:8px 18px;border-radius:8px;cursor:pointer;flex:none}
+#go:hover{filter:brightness(1.08)}
+#go:disabled{opacity:.5;cursor:default}
+select{border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--dim);
+ font:inherit;font-size:11.5px;padding:7px 8px;max-width:190px;flex:none}
+label.opt{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);
+ flex:none;cursor:pointer}
+label.opt input{accent-color:var(--acc);margin:0}
+#msg{font-size:11.5px;color:var(--del);flex-basis:100%;padding-left:2px}
+#msg:empty{display:none}
+#view{flex:1;border:0;width:100%;background:var(--bg)}
+[hidden]{display:none!important}
+.hint{flex:1;display:flex;align-items:center;justify-content:center;color:var(--faint);
+ font-size:13px;text-align:center;padding:24px;line-height:1.9}
+</style></head><body>
+<form id=f>
+ <span class=brand>
+  <svg width=16 height=16 viewBox="0 0 16 16" fill=none stroke=currentColor stroke-width=1.6><rect x=1.5 y=1.5 width=8 height=8 rx="1.5"/><rect x=6.5 y=6.5 width=8 height=8 rx="1.5"/></svg>
+  markcompare
+ </span>
+ <span class=pick><input id=a placeholder="Left folder" spellcheck=false autocomplete=off><button type=button data-for=a>Browse</button></span>
+ <svg class=arrow width=14 height=14 viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+ <span class=pick><input id=b placeholder="Right folder" spellcheck=false autocomplete=off><button type=button data-for=b>Browse</button></span>
+ <button id=go type=submit>Compare</button>
+ <select id=recent title="Recent comparisons"><option value="">Recent</option></select>
+ <label class=opt title="Include .git, node_modules and other build folders"><input type=checkbox id=all> everything</label>
+ <div id=msg></div>
+</form>
+<div class=hint id=hint>Pick two folders and press Compare.<br>Paste a path directly, or use Browse.</div>
+<iframe id=view hidden title="diff"></iframe>
+<script>
+var $=function(i){return document.getElementById(i)};
+var a=$('a'),b=$('b'),go=$('go'),msg=$('msg'),view=$('view'),hint=$('hint'),recent=$('recent');
+
+try{ a.value=localStorage.getItem('mc.a')||''; b.value=localStorage.getItem('mc.b')||''; }catch(e){}
+
+fetch('/recent').then(function(r){return r.json()}).then(function(list){
+ list.forEach(function(p,i){
+  var o=document.createElement('option');
+  o.value=i; o.textContent=base(p[0])+'  ->  '+base(p[1]); o.title=p[0]+'\n'+p[1];
+  recent.appendChild(o);
+ });
+ recent.onchange=function(){
+  var p=list[+recent.value];
+  if(p){a.value=p[0];b.value=p[1];recent.value=''}
+ };
+}).catch(function(){});
+
+function base(p){var s=p.replace(/[\\/]+$/,'');return s.slice(s.search(/[^\\/]*$/))||s}
+
+document.querySelectorAll('.pick button').forEach(function(btn){
+ btn.onclick=function(){
+  var el=$(btn.dataset.for);
+  btn.disabled=true;btn.textContent='...';
+  fetch('/pick?at='+encodeURIComponent(el.value)).then(function(r){return r.json()})
+   .then(function(j){
+    if(j.path) el.value=j.path;
+    else if(j.error) msg.textContent=j.error;
+   })
+   .catch(function(){msg.textContent='Folder dialog unavailable - paste the path instead.'})
+   .then(function(){btn.disabled=false;btn.textContent='Browse'});
+ };
+});
+
+$('f').onsubmit=function(e){
+ e.preventDefault();
+ msg.textContent='';
+ if(!a.value.trim()||!b.value.trim()){msg.textContent='Pick both folders first.';return}
+ try{ localStorage.setItem('mc.a',a.value); localStorage.setItem('mc.b',b.value); }catch(err){}
+ go.disabled=true;go.textContent='Comparing...';
+ var url='/diff?a='+encodeURIComponent(a.value.trim())+'&b='+encodeURIComponent(b.value.trim())+
+         ($('all').checked?'&all=1':'');
+ fetch(url).then(function(r){return r.text().then(function(t){return {ok:r.ok,t:t}})})
+  .then(function(res){
+   if(!res.ok){msg.textContent=res.t;return}
+   hint.hidden=true;view.hidden=false;
+   view.srcdoc=res.t;
+   view.onload=function(){try{view.contentWindow.focus()}catch(err){}};
+  })
+  .catch(function(){msg.textContent='Compare failed.'})
+  .then(function(){go.disabled=false;go.textContent='Compare'});
+};
+a.focus();
+</script></body></html>"""
+
+
+def pick_dir(initial):
+    """Native folder dialog. '' when tkinter is missing or the user cancels."""
+    try:
+        import tkinter
+        from tkinter import filedialog
+    except ImportError:
+        return ""
+    root = None
+    try:
+        root = tkinter.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        return filedialog.askdirectory(initialdir=initial or os.path.expanduser("~")) or ""
+    except Exception:
+        return ""
+    finally:
+        if root is not None:
+            try:
+                root.destroy()
+            except Exception:
+                pass
+
+
+RECENT_FILE = os.path.join(os.path.expanduser("~"), ".markcompare.json")
+
+
+def load_recent():
+    try:
+        with open(RECENT_FILE, encoding="utf-8") as fh:
+            items = json.load(fh)
+        return [p for p in items if isinstance(p, list) and len(p) == 2][:8]
+    except (OSError, ValueError):
+        return []
+
+
+def save_recent(a, b):
+    items = [p for p in load_recent() if p != [a, b]]
+    items.insert(0, [a, b])
+    try:
+        with open(RECENT_FILE, "w", encoding="utf-8") as fh:
+            json.dump(items[:8], fh)
+    except OSError:
+        pass
+
+
+def shell():
+    return SHELL.replace("__TOKENS__", TOKENS).replace("__ICON__", ICON)
+
+
+def serve(port):
+    import http.server
+    import urllib.parse
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def reply(self, body, code=200, ctype="text/html; charset=utf-8"):
+            raw = body.encode("utf-8")
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+
+        def do_GET(self):
+            url = urllib.parse.urlparse(self.path)
+            qs = urllib.parse.parse_qs(url.query)
+            arg = lambda k: (qs.get(k) or [""])[0]
+
+            if url.path == "/":
+                self.reply(shell())
+            elif url.path == "/recent":
+                self.reply(json.dumps(load_recent()), ctype="application/json")
+            elif url.path == "/pick":
+                path = pick_dir(arg("at"))
+                body = {"path": path}
+                if not path:
+                    body["error"] = ""  # cancelled, or no tkinter: stay quiet
+                self.reply(json.dumps(body), ctype="application/json")
+            elif url.path == "/diff":
+                left, right = arg("a"), arg("b")
+                for p in (left, right):
+                    if not p or not os.path.exists(p):
+                        self.reply("Not found: %s" % esc(p or "(empty)"), 400,
+                                   "text/plain; charset=utf-8")
+                        return
+                left, right = os.path.abspath(left), os.path.abspath(right)
+                files, data = compare(left, right, skip=arg("all") != "1")
+                save_recent(left, right)
+                self.reply(render(files, data, left, right))
+            else:
+                self.reply("not found", 404, "text/plain; charset=utf-8")
+
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    url = "http://127.0.0.1:%d/" % srv.server_address[1]
+    print("markcompare running at %s   (Ctrl+C to stop)" % url)
+    webbrowser.open(url)
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        print("\nstopped")
+    finally:
+        srv.server_close()
+
+
 def render(files, data, root_a, root_b):
     out = TEMPLATE
     for key, val in (
+        ("__TOKENS__", TOKENS),
+        ("__ICON__", ICON),
         ("__FILES__", json.dumps(files, separators=(",", ":"))),
         ("__DATA__", json.dumps(data, separators=(",", ":"))),
         ("__NAME_A__", json.dumps(os.path.basename(root_a.rstrip(r"\/")) or root_a)),
@@ -495,27 +729,38 @@ def selftest():
 
     out = render(files, data, a, b)
     assert "__DATA__" not in out and "__ROOT_A__" not in out and "__NAME_A__" not in out
+    assert "__TOKENS__" not in out and "--acc:" in out
+
+    page = shell()
+    assert "__TOKENS__" not in page and "__ICON__" not in page
+
     shutil.rmtree(tmp, ignore_errors=True)
     print("selftest ok")
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="markcompare",
-                                 description="side-by-side folder/file diff in one HTML file")
+    ap = argparse.ArgumentParser(
+        prog="markcompare",
+        description="side-by-side folder/file diff. run with no arguments for the app.")
     ap.add_argument("a", nargs="?", help="left folder or file")
     ap.add_argument("b", nargs="?", help="right folder or file")
     ap.add_argument("-o", "--out", help="write HTML here instead of a temp file")
     ap.add_argument("--no-open", action="store_true", help="do not launch the browser")
     ap.add_argument("--all-dirs", action="store_true",
                     help="include .git, node_modules and friends")
+    ap.add_argument("--port", type=int, default=0,
+                    help="port for the app (default: pick a free one)")
     ap.add_argument("--selftest", action="store_true", help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
 
     if args.selftest:
         selftest()
         return 0
+    if not args.a and not args.b:
+        serve(args.port)
+        return 0
     if not args.a or not args.b:
-        ap.error("need two paths")
+        ap.error("need two paths, or none at all to open the app")
     for p in (args.a, args.b):
         if not os.path.exists(p):
             ap.error("not found: %s" % p)
