@@ -1,0 +1,301 @@
+<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>markcompare</title>
+<link rel=icon href="__ICON__">
+<style>
+__TOKENS__
+:root{--wa:50%}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);
+ font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,Inter,sans-serif;
+ -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px;border-radius:4px}
+
+header{display:flex;align-items:center;gap:14px;padding:0 14px;height:46px;flex:none;
+ border-bottom:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow)}
+header svg{display:block;opacity:.8;flex:none}
+.brand{font-weight:640;letter-spacing:-.015em;font-size:13.5px;flex:none}
+.roots{display:flex;align-items:center;gap:8px;flex:1;min-width:0;color:var(--dim);font-size:12px}
+.chip{padding:2px 9px;border:1px solid var(--line);border-radius:999px;background:var(--bg);
+ color:var(--fg);font-size:11.5px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend{display:flex;gap:12px;font-size:11px;color:var(--dim);flex:none;align-items:center}
+.legend span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.sq{width:8px;height:8px;border-radius:2.5px;flex:none;display:inline-block}
+kbd{font:inherit;font-size:10.5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;
+ padding:1px 5px;color:var(--dim);background:var(--bg)}
+
+main{flex:1;display:flex;min-height:0}
+aside{width:300px;min-width:210px;max-width:560px;flex:none;background:var(--panel);
+ border-right:1px solid var(--line);display:flex;flex-direction:column;resize:horizontal;overflow:hidden}
+.tools{padding:10px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line)}
+#q{width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);
+ color:var(--fg);font:inherit;font-size:12px}
+#q::placeholder{color:var(--faint)}
+#q:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 18%,transparent)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--dim)}
+.row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.row label input{accent-color:var(--acc);margin:0}
+#sum{font-variant-numeric:tabular-nums;white-space:nowrap}
+#sum b{font-weight:600}
+.plus{color:var(--ins)} .minus{color:var(--del)}
+
+#list{flex:1;overflow-y:auto;list-style:none;margin:0;padding:0 0 8px}
+#list .g{position:sticky;top:0;z-index:1;background:var(--panel);color:var(--faint);
+ font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:9px 12px 4px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#list li[data-i]{display:flex;align-items:center;gap:8px;margin:0 6px;padding:5px 8px;border-radius:6px;
+ cursor:pointer;font-size:12.5px;white-space:nowrap;overflow:hidden}
+#list li[data-i]:hover{background:var(--sel)}
+#list li.on{background:var(--sel);box-shadow:inset 2px 0 0 var(--acc)}
+#list .p{overflow:hidden;text-overflow:ellipsis;flex:1}
+#list .b{font-size:10.5px;font-variant-numeric:tabular-nums;flex:none;letter-spacing:-.01em}
+#list .empty{padding:22px 12px;text-align:center;color:var(--faint);font-size:12px}
+
+section{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#bar{display:flex;align-items:center;gap:12px;height:38px;padding:0 12px;flex:none;
+ border-bottom:1px solid var(--line);background:var(--bg)}
+#name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:12.5px;font-weight:560}
+#name span{color:var(--faint);font-weight:400}
+#nav{display:flex;align-items:center;gap:2px;flex:none}
+#nav button{border:1px solid var(--line);background:var(--bg);color:var(--dim);border-radius:6px;
+ width:24px;height:24px;line-height:1;cursor:pointer;font-size:13px;padding:0}
+#nav button:hover:not(:disabled){color:var(--fg);border-color:var(--dim)}
+#nav button:disabled{opacity:.35;cursor:default}
+#pos{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;padding:0 8px;white-space:nowrap}
+#pane{flex:1;overflow:auto;overflow-anchor:none;background:var(--bg)}
+
+table{width:100%;border-collapse:collapse;table-layout:fixed;
+ font:12px/1.6 ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,"Liberation Mono",monospace}
+col.ln{width:50px}
+col.ca{width:calc(var(--wa) - 50px)}
+thead th{position:sticky;top:0;z-index:2;background:var(--panel);text-align:left;font-weight:400;
+ font-size:11px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+ color:var(--dim);padding:5px 12px;border-bottom:1px solid var(--line);
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+thead th+th{border-left:1px solid var(--line)}
+#grip{position:absolute;top:38px;bottom:0;width:11px;margin-left:-5px;z-index:6;
+ cursor:col-resize;touch-action:none}
+#grip::after{content:"";position:absolute;inset:0 5px;background:var(--acc);opacity:0;transition:opacity .12s}
+#grip:hover::after,#grip.on::after{opacity:.6}
+body.drag{user-select:none;cursor:col-resize}
+td{padding:0 10px;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}
+td.n{text-align:right;color:var(--faint);user-select:none;padding:0 7px;
+ font-variant-numeric:tabular-nums;border-right:1px solid var(--line)}
+td.c+td.n{border-left:1px solid var(--line)}
+tr.rdel td:nth-child(1),tr.rdel td:nth-child(2){background:var(--delbg)}
+tr.rins td:nth-child(3),tr.rins td:nth-child(4){background:var(--insbg)}
+tr.rch td{background:var(--chgbg)}
+tr.rdel td:nth-child(3),tr.rdel td:nth-child(4),
+tr.rins td:nth-child(1),tr.rins td:nth-child(2){background:var(--empty)}
+tr.rdel i{background:var(--delin)}
+tr.rins i{background:var(--insin)}
+tr.rch i{background:var(--chgin)}
+i{font-style:normal;border-radius:3px;padding:1px 0}
+[hidden]{display:none!important}
+tr.h{display:none}
+tr.fr td{background:var(--panel);color:var(--faint);cursor:pointer;text-align:center;font-size:11px;
+ padding:4px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);user-select:none;
+ font-family:inherit}
+tr.fr:hover td{color:var(--acc)}
+tr.cur td{box-shadow:inset 0 1px 0 var(--acc),inset 0 -1px 0 var(--acc)}
+.msg{padding:60px 24px;color:var(--faint);text-align:center;font-size:13px}
+</style></head><body>
+<header>
+<svg width=16 height=16 viewBox="0 0 16 16"><rect x=1.5 y=1.5 width=8 height=8 fill=none stroke=currentColor stroke-width=1.6 rx="1.5"/><rect x=6.5 y=6.5 width=8 height=8 fill=none stroke=currentColor stroke-width=1.6 rx="1.5"/></svg>
+<span class=brand>markcompare</span>
+<span class=roots>
+ <span class=chip title="__ROOT_A__">__TEXT_A__</span>
+ <svg width=13 height=13 viewBox="0 0 24 24" fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+ <span class=chip title="__ROOT_B__">__TEXT_B__</span>
+</span>
+<span class=legend>
+<span><i class=sq style="background:var(--chg)"></i>changed</span>
+<span><i class=sq style="background:var(--ins)"></i>added</span>
+<span><i class=sq style="background:var(--del)"></i>removed</span>
+<span><kbd>j</kbd><kbd>k</kbd>file</span>
+<span><kbd>n</kbd><kbd>p</kbd>change</span>
+</span>
+</header>
+<main>
+<aside>
+ <div class=tools>
+  <input id=q placeholder="Filter files    /" autocomplete=off spellcheck=false>
+  <div class=row>
+   <span id=sum></span>
+   <label><input type=checkbox id=same> identical</label>
+  </div>
+ </div>
+ <ul id=list></ul>
+</aside>
+<section>
+ <div id=bar>
+  <span id=name></span>
+  <span id=nav>
+   <button id=prev title="Previous change (p)">&#8249;</button>
+   <span id=pos></span>
+   <button id=next title="Next change (n)">&#8250;</button>
+  </span>
+ </div>
+ <div id=pane><div class=msg>Select a file</div></div>
+ <div id=grip title="Drag to resize, double-click to reset"></div>
+</section>
+</main>
+<script>
+var FILES=__FILES__,DATA=__DATA__,NA=__NAME_A__,NB=__NAME_B__;
+var COLOR={ch:'var(--chg)',left:'var(--del)',right:'var(--ins)',bin:'var(--dim)',same:'transparent'};
+var $=function(id){return document.getElementById(id)};
+var list=$('list'),pane=$('pane'),q=$('q'),same=$('same'),fname=$('name'),pos=$('pos'),
+    prev=$('prev'),next=$('next'),grip=$('grip'),root=document.documentElement;
+var shown=[],cur=-1,hunks=[],hi=-1;
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+
+function summary(){
+ var c=0,a=0,r=0,adds=0,dels=0;
+ FILES.forEach(function(f){
+  if(f[1]==='same') return;
+  if(f[1]==='ch') c++; else if(f[1]==='right') a++; else if(f[1]==='left') r++;
+  adds+=f[2]; dels+=f[3];
+ });
+ var n=c+a+r;
+ $('sum').innerHTML='<b>'+n+'</b> file'+(n===1?'':'s')+
+   (adds?' <span class=plus>+'+adds+'</span>':'')+(dels?' <span class=minus>-'+dels+'</span>':'');
+}
+
+function paint(){
+ var f=q.value.toLowerCase(),all=same.checked;
+ shown=FILES.filter(function(x){return (all||x[1]!=='same')&&x[0].toLowerCase().indexOf(f)>=0});
+ var out=[],last=null;
+ shown.forEach(function(x,i){
+  var s=x[0].lastIndexOf('/'),dir=s<0?'.':x[0].slice(0,s),base=x[0].slice(s+1);
+  if(dir!==last){if(dir!=='.')out.push('<li class=g title="'+esc(dir)+'">'+esc(dir)+'</li>');last=dir}
+  var badge=x[1]==='bin'?'<span class="b" style="color:var(--faint)">bin</span>':
+   (x[2]?'<span class="b plus">+'+x[2]+'</span>':'')+(x[3]?'<span class="b minus">-'+x[3]+'</span>':'');
+  out.push('<li data-i='+i+' title="'+esc(x[0])+'">'+
+   '<i class=sq style="background:'+COLOR[x[1]]+
+   (x[1]==='same'?';box-shadow:inset 0 0 0 1px var(--line)':'')+'"></i>'+
+   '<span class=p>'+esc(base)+'</span>'+badge+'</li>');
+ });
+ list.innerHTML=out.join('')||'<li class=empty>No files match</li>';
+ cur=-1;
+}
+
+function tr(r,extra){
+ return '<tr class="r'+r[0]+(extra||'')+'"><td class=n>'+(r[1]||'')+'</td><td class=c>'+r[2]+
+        '</td><td class=n>'+(r[3]||'')+'</td><td class=c>'+r[4]+'</td></tr>';
+}
+
+function mark(){
+ pos.textContent=hunks.length?(hi<0?hunks.length+' changes':(hi+1)+' / '+hunks.length):'';
+ prev.disabled=next.disabled=!hunks.length;
+}
+
+function show(i){
+ var f=shown[i];
+ if(!f) return;
+ cur=i;
+ var lis=list.querySelectorAll('li[data-i]');
+ for(var c=0;c<lis.length;c++) lis[c].classList.toggle('on',+lis[c].dataset.i===i);
+ var li=list.querySelector('li[data-i="'+i+'"]');
+ if(li&&li.scrollIntoView) li.scrollIntoView({block:'nearest'});
+ var s=f[0].lastIndexOf('/')+1;
+ fname.innerHTML='<span>'+esc(f[0].slice(0,s))+'</span>'+esc(f[0].slice(s));
+ var rows=DATA[f[0]];
+ if(!rows){
+  pane.innerHTML='<div class=msg>'+(f[1]==='bin'?'Binary or oversized file &mdash; content not compared':'Files are identical')+'</div>';
+  hunks=[];hi=-1;mark();grip.hidden=true;return;
+ }
+ grip.hidden=false;
+ var out=[],k=0,g=0,j;
+ while(k<rows.length){
+  if(rows[k][5]){
+   j=k; while(j<rows.length&&rows[j][5]) j++;
+   if(j-k<4){ while(k<j) out.push(tr(rows[k++])); continue; }
+   out.push('<tr class=fr data-g='+g+'><td colspan=4>'+(j-k)+' unchanged lines</td></tr>');
+   while(k<j) out.push(tr(rows[k++],' h g'+g));
+   g++;
+  } else out.push(tr(rows[k++]));
+ }
+ var head='<thead><tr><th colspan=2>'+esc(f[1]==='right'?'not in '+NA:NA)+
+          '</th><th colspan=2>'+esc(f[1]==='left'?'not in '+NB:NB)+'</th></tr></thead>';
+ pane.innerHTML='<table><col class=ln><col class=ca><col class=ln><col>'+head+
+                '<tbody>'+out.join('')+'</tbody></table>';
+ placeGrip();
+ pane.scrollTop=0;
+ hunks=[].slice.call(pane.querySelectorAll('tr.rch,tr.rdel,tr.rins')).filter(function(t){
+  var p=t.previousElementSibling;
+  return !p||!/^r(ch|del|ins)$/.test(p.className);
+ });
+ hi=-1;mark();
+}
+
+function hunk(d){
+ if(!hunks.length) return;
+ hi=Math.max(0,Math.min(hunks.length-1,hi+d));
+ hunks.forEach(function(t){t.classList.remove('cur')});
+ hunks[hi].classList.add('cur');
+ hunks[hi].scrollIntoView({block:'center'});
+ mark();
+}
+
+list.onclick=function(e){
+ var li=e.target.closest('li[data-i]');
+ if(li) show(+li.dataset.i);
+};
+pane.onclick=function(e){
+ var fr=e.target.closest('tr.fr');
+ if(!fr) return;
+ pane.querySelectorAll('.g'+fr.dataset.g).forEach(function(t){t.classList.remove('h')});
+ fr.parentNode.removeChild(fr);
+};
+prev.onclick=function(){hunk(-1)};
+next.onclick=function(){hunk(1)};
+q.oninput=function(){paint();if(shown.length)show(0)};
+same.onchange=function(){paint();if(shown.length)show(0)};
+document.onkeydown=function(e){
+ if(e.target===q){ if(e.key==='Escape'){q.value='';paint();if(shown.length)show(0);q.blur()} return; }
+ if(e.metaKey||e.ctrlKey||e.altKey) return;
+ if(e.key==='/'){e.preventDefault();q.focus()}
+ else if(e.key==='j'){e.preventDefault();show(Math.min(shown.length-1,cur+1))}
+ else if(e.key==='k'){e.preventDefault();show(Math.max(0,cur-1))}
+ else if(e.key==='n'){e.preventDefault();hunk(1)}
+ else if(e.key==='p'){e.preventDefault();hunk(-1)}
+};
+// one source of truth in px: css calc() with percentages is unreliable on <col>
+function placeGrip(){
+ var w=Math.round(50+(pane.clientWidth-100)*split);
+ root.style.setProperty('--wa',w+'px');
+ grip.style.left=w+'px';
+}
+var split=.5;
+function setSplit(v){
+ split=Math.max(.15,Math.min(.85,v));
+ placeGrip();
+ try{localStorage.setItem('mc.split',split)}catch(e){}
+}
+try{var saved=parseFloat(localStorage.getItem('mc.split'));if(saved>0)split=Math.max(.15,Math.min(.85,saved))}catch(e){}
+grip.onpointerdown=function(e){
+ e.preventDefault();
+ grip.setPointerCapture(e.pointerId);
+ grip.classList.add('on');document.body.classList.add('drag');
+};
+grip.onpointermove=function(e){
+ if(!grip.classList.contains('on')) return;
+ setSplit((e.clientX-pane.getBoundingClientRect().left-50)/(pane.clientWidth-100));
+};
+grip.onpointerup=grip.onpointercancel=function(e){
+ grip.classList.remove('on');document.body.classList.remove('drag');
+ try{grip.releasePointerCapture(e.pointerId)}catch(err){}
+};
+grip.ondblclick=function(){setSplit(.5)};
+window.onresize=placeGrip;
+
+if(window.parent!==window){
+ document.querySelector('header svg').style.display='none';
+ document.querySelector('.brand').style.display='none';
+}
+summary();paint();
+if(shown.length) show(0); else mark();
+</script></body></html>
