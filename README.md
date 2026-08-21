@@ -27,7 +27,11 @@ send it to someone and they see the same diff, offline.
 |---|---|
 | `j` / `k` | next / previous file |
 | `n` / `p` | next / previous change |
-| `/` | filter files |
+| `/` | filter files (`Esc` clears) |
+
+The toolbar shows `3 / 12` while you step through changes, with `<` `>` buttons for
+the same thing. The sidebar groups files by folder, shows `+n -n` per file, and can be
+dragged wider.
 
 ## Options
 
